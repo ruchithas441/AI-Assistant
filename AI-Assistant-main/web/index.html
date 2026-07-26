@@ -215,21 +215,13 @@
 </div>
 
 <script>
-  var ws = new WebSocket("ws://ai-assistant-ihnv.onrender.com");
   var chatBox = document.getElementById("chatBox");
   var userInput = document.getElementById("userInput");
   var statusDot = document.getElementById("statusDot");
 
   marked.setOptions({ breaks: true, gfm: true });
 
-  ws.onopen = function() {
-    statusDot.style.background = "#4ade80";
-    statusDot.style.boxShadow = "0 0 8px #4ade8088";
-  };
-  ws.onclose = function() {
-    statusDot.style.background = "#f87171";
-  };
-
+  
   function removeEmptyState() {
     var e = document.getElementById("emptyState");
     if (e) e.remove();
@@ -298,11 +290,7 @@
     if (t) t.remove();
   }
 
-  ws.onmessage = function(event) {
-    removeTyping();
-    appendMessage("AI", event.data, true);
-  };
-
+ 
   document.getElementById("sendBtn").addEventListener("click", sendMessage);
 
   userInput.addEventListener("keydown", function(e) {
@@ -316,17 +304,22 @@
     userInput.style.height = "auto";
     userInput.style.height = Math.min(userInput.scrollHeight, 120) + "px";
   });
-
-  function sendMessage() {
-    var text = userInput.value.trim();
-    if (!text) return;
-    appendMessage("You", text, false);
-    showTyping();
-    ws.send(text);
-    userInput.value = "";
-    userInput.style.height = "auto";
-  }
-
+function sendMessage() {
+  var text = userInput.value.trim();
+  if (!text) return;
+  appendMessage("You", text, false);
+  showTyping();
+  fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) { removeTyping(); appendMessage("AI", data.reply, true); })
+  .catch(function(err) { removeTyping(); appendMessage("AI", "Error: " + err.message, false); });
+  userInput.value = "";
+  userInput.style.height = "auto";
+}
   var recognition;
   var startBtn = document.getElementById("startVoiceBtn");
   var stopBtn = document.getElementById("stopVoiceBtn");
