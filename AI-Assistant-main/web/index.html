@@ -334,7 +334,7 @@ function sendMessage() {
       var transcript = event.results[event.results.length - 1][0].transcript.trim();
       appendMessage("You (voice)", transcript, false);
       showTyping();
-      ws.send(transcript);
+      fetch("/chat", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:transcript})}).then(function(r){return r.json();}).then(function(data){removeTyping();appendMessage("AI",data.reply,true);}).catch(function(err){removeTyping();appendMessage("AI","Error: "+err.message,false);});
     };
 
     recognition.onerror = function(e) { console.error("Speech error:", e.error); };
